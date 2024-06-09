@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Navigation App</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        #map { height: 100%; flex-grow: 1; }
+        #controls {
+            padding: 10px;
+            background: #f8f9fa;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            border-radius: 8px;
+            margin: 10px;
+        }
+        #controls input, #controls button {
+            padding: 10px 15px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        #controls input {
+            flex-grow: 1;
+            min-width: 200px;
+        }
+        #controls button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        #controls button:hover {
+            background: #0056b3;
+        }
+
+        /* Responsive Style */
+        @media (max-width: 768px) {
+            #controls {
+                flex-direction: column;
+                gap: 5px;
+            }
+            #controls input, #controls button {
+                width: 100%;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #controls {
+                padding: 5px;
+                margin: 5px;
+            }
+            #controls input, #controls button {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <input type="text" id="destination" placeholder="Enter destination address">
+        <button id="routeButton">Get Route</button>
+        <button id="saveRouteButton">Save Route</button>
+        <button id="loadRouteButton">Load Route</button>
+    </div>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const map = L.map('map').fitWorld();
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 24,
+            }).addTo(map);
+
+            let userLocation;
+            let routingControl;
+
+            map.locate({ setView: true, maxZoom: 16, watch: true });
+
+            function onLocationFound(e) {
+                userLocation = e.latlng;
+                const radius = e.accuracy / 2;
+
+                L.marker(e.latlng).addTo(map)
+                    .bindPopup("You are within " + radius + " meters from this point").openPopup();
+
+                L.circle(e.latlng, radius).addTo(map);
+
+                if (e.heading !== undefined) {
+                    marker.setRotationAngle(e.heading);
+                }
+            }
+
+            function onLocationError(e) {
+                alert(e.message);
+            }
+
+            map.on('locationfound', onLocationFound);
+            map.on('locationerror', onLocationError);
+
+            function clearExistingRoutes() {
+                if (routingControl) {
+                    map.removeControl(routingControl);
+                }
+            }
+
+            function calculateRoute(destLatLng) {
+                clearExistingRoutes();
+
+                routingControl = L.Routing.control({
+                    waypoints: [
+                        userLocation,
+                        destLatLng
+                    ],
+                    routeWhileDragging: true,
+                    showAlternatives: true,
+                    altLineOptions: {
+                        styles: [
+                            { color: 'black', opacity: 0.15, weight: 9 },
+                            { color: 'white', opacity: 0.8, weight: 6 },
+                            { color: 'blue', opacity: 0.5, weight: 2 }
+                        ]
+                    },
+                    createMarker: function(i, waypoint, n) {
+                        return L.marker(waypoint.latLng).bindPopup(`Stop ${i + 1}`);
+                    }
+                }).addTo(map);
+            }
+
+            document.getElementById('routeButton').addEventListener('click', () => {
+                const destination = document.getElementById('destination').value;
+
+                if (!destination) {
+                    alert("Please enter a destination address.");
+                    return;
+                }
+
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${destination}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length === 0) {
+                            alert("Address not found.");
+                            return;
+                        }
+
+                        const destLatLng = L.latLng(data[0].lat, data[0].lon);
+                        calculateRoute(destLatLng);
+                    })
+                    .catch(error => {
+                        console.error("Error fetching address:", error);
+                        alert("Error fetching address.");
+                    });
+            });
+
+            map.on('click', (e) => {
+                const destLatLng = e.latlng;
+                calculateRoute(destLatLng);
+            });
+
+            document.getElementById('saveRouteButton').addEventListener('click', () => {
+                const destination = document.getElementById('destination').value;
+                if (destination) {
+                    localStorage.setItem('favoriteRoute', destination);
+                    alert("Route saved!");
+                } else {
+                    alert("Please enter a destination to save.");
+                }
+            });
+
+            document.getElementById('loadRouteButton').addEventListener('click', () => {
+                const savedRoute = localStorage.getItem('favoriteRoute');
+                if (savedRoute) {
+                    document.getElementById('destination').value = savedRoute;
+                    alert("Route loaded!");
+                } else {
+                    alert("No saved route found.");
+                }
+            });
+
+            const trafficLayer = L.tileLayer('https://traffic.api.hypothetical.com/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+                opacity: 0.7
+            });
+        });
+    </script>
+</body>
+</html>
