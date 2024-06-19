@@ -90,6 +90,8 @@
         placeholder="Enter destination address"
       />
       <button id="routeButton">Get Route</button>
+      <!-- <button id="saveRouteButton">Save Route</button> -->
+      <!-- <button id="loadRouteButton">Load Route</button> -->
     </div>
     <div id="map"></div>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
@@ -113,24 +115,13 @@
 
           L.marker(e.latlng)
             .addTo(map)
-            .bindPopup(
-              `You are within ${radius} meters from this point
-                      ${e.altitude ? `<br>Altitude: ${e.altitude} meters` : ""}
-                      ${
-                        e.altitudeAccuracy
-                          ? `<br>Altitude Accuracy: ${e.altitudeAccuracy} meters`
-                          : ""
-                      }
-                      ${e.heading ? `<br>Heading: ${e.heading} degrees` : ""}
-                      ${e.speed ? `<br>Speed: ${e.speed} m/s` : ""}
-                    `
-            )
+            .bindPopup("You are within " + radius + " meters from this point")
             .openPopup()
 
           L.circle(e.latlng, radius).addTo(map)
 
           if (e.heading !== undefined) {
-            L.marker(e.latlng, { rotationAngle: e.heading }).addTo(map)
+            marker.setRotationAngle(e.heading)
           }
         }
 
@@ -198,6 +189,31 @@
           const destLatLng = e.latlng
           calculateRoute(destLatLng)
         })
+
+        // document.getElementById('saveRouteButton').addEventListener('click', () => {
+        //     const destination = document.getElementById('destination').value;
+        //     if (destination) {
+        //         localStorage.setItem('favoriteRoute', destination);
+        //         alert("Route saved!");
+        //     } else {
+        //         alert("Please enter a destination to save.");
+        //     }
+        // });
+
+        // document.getElementById('loadRouteButton').addEventListener('click', () => {
+        //     const savedRoute = localStorage.getItem('favoriteRoute');
+        //     if (savedRoute) {
+        //         document.getElementById('destination').value = savedRoute;
+        //         alert("Route loaded!");
+        //     } else {
+        //         alert("No saved route found.");
+        //     }
+        // });
+
+        // const trafficLayer = L.tileLayer('https://traffic.api.hypothetical.com/{z}/{x}/{y}.png', {
+        //     maxZoom: 18,
+        //     opacity: 0.7
+        // });
       })
     </script>
   </body>
