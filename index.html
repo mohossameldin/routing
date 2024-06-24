@@ -11,47 +11,57 @@
       rel="stylesheet"
       href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css"
     />
+    <link rel="icon" type="image/png" href="./assets/images/locate.png"> 
     <style>
-      body,
+      /* Basic reset */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body
       html {
         height: 100%;
         margin: 0;
         display: flex;
         flex-direction: column;
       }
+
       #map {
         height: 100%;
         flex-grow: 1;
       }
+
       #controls {
         padding: 10px;
         background: #f8f9fa;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         z-index: 1000;
         display: flex;
-        flex-wrap: wrap;
+        flex-direction: column;
         gap: 10px;
         align-items: center;
         border-radius: 8px;
         margin: 10px;
       }
+
       #controls input,
       #controls button {
         padding: 10px 15px;
-        border: 1px solid #ced4da;
+        border: 1px solid #1e1e1e;
         border-radius: 4px;
         font-size: 16px;
+        width: 100%;
       }
-      #controls input {
-        flex-grow: 1;
-        min-width: 200px;
-      }
+
       #controls button {
         background: #007bff;
         color: white;
         cursor: pointer;
         transition: background 0.3s ease;
       }
+
       #controls button:hover {
         background: #0056b3;
       }
@@ -59,12 +69,11 @@
       /* Responsive Style */
       @media (max-width: 768px) {
         #controls {
-          flex-direction: column;
           gap: 5px;
         }
+
         #controls input,
         #controls button {
-          width: 100%;
           font-size: 14px;
         }
       }
@@ -74,10 +83,19 @@
           padding: 5px;
           margin: 5px;
         }
+
         #controls input,
         #controls button {
           padding: 8px 10px;
           font-size: 12px;
+        }
+      }
+
+      @media (max-width: 270px) {
+        .leaflet-routing-container.leaflet-bar.leaflet-control {
+          right: 594px !important; 
+          font-size: 16px;
+          font-weight: 800;
         }
       }
     </style>
@@ -90,8 +108,6 @@
         placeholder="Enter destination address"
       />
       <button id="routeButton">Get Route</button>
-      <!-- <button id="saveRouteButton">Save Route</button> -->
-      <!-- <button id="loadRouteButton">Load Route</button> -->
     </div>
     <div id="map"></div>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
@@ -124,8 +140,6 @@
           if (e.heading !== undefined) {
             marker.setRotationAngle(e.heading)
           }
-
-          console.log("onLocationFound(e): ", e)
         }
 
         function onLocationError(e) {
@@ -157,10 +171,6 @@
               ],
             },
             createMarker: function (i, waypoint, n) {
-              console.log(
-                "calculateRoute: ",
-                L.marker(waypoint.latLng).bindPopup(`Stop ${i + 1}`)
-              )
               return L.marker(waypoint.latLng).bindPopup(`Stop ${i + 1}`)
             },
           }).addTo(map)
@@ -197,34 +207,6 @@
           const destLatLng = e.latlng
           calculateRoute(destLatLng)
         })
-
-        console.log("userLocation", userLocation)
-        console.log("routingControl", routingControl)
-
-        // document.getElementById('saveRouteButton').addEventListener('click', () => {
-        //     const destination = document.getElementById('destination').value;
-        //     if (destination) {
-        //         localStorage.setItem('favoriteRoute', destination);
-        //         alert("Route saved!");
-        //     } else {
-        //         alert("Please enter a destination to save.");
-        //     }
-        // });
-
-        // document.getElementById('loadRouteButton').addEventListener('click', () => {
-        //     const savedRoute = localStorage.getItem('favoriteRoute');
-        //     if (savedRoute) {
-        //         document.getElementById('destination').value = savedRoute;
-        //         alert("Route loaded!");
-        //     } else {
-        //         alert("No saved route found.");
-        //     }
-        // });
-
-        // const trafficLayer = L.tileLayer('https://traffic.api.hypothetical.com/{z}/{x}/{y}.png', {
-        //     maxZoom: 18,
-        //     opacity: 0.7
-        // });
       })
     </script>
   </body>
